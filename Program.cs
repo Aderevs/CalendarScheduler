@@ -4,7 +4,11 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            /*CalendarModel model = new CalendarModel();
+            model.PrintAllDays();*/
+            DateTime dateTime = new DateTime(2024, 2, 2);
+            Console.WriteLine(dateTime.Date);
+
         }
     }
 }
