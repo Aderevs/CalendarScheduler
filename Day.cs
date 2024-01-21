@@ -18,14 +18,17 @@ namespace CalendarScheduler
     }
     internal struct Day
     {
-        public DateTime Date {  get; set; }
         public TypeOfDate Type { get; set; }
-        public string? NameOfEvent { get; set; }
+        public string? NameOfEvents { get; set; }
 
-        public Day(DateTime date, TypeOfDate type)
+        public Day(TypeOfDate type)
         {
-            Date = date;
             Type = type;
         }
+        public Day(TypeOfDate type, string nameOfEvent):this(type)
+        {
+            NameOfEvents = nameOfEvent;
+        }
+
     }
 }

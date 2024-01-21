@@ -4,11 +4,10 @@
     {
         static void Main(string[] args)
         {
-            /*CalendarModel model = new CalendarModel();
-            model.PrintAllDays();*/
-            DateTime dateTime = new DateTime(2024, 2, 2);
-            Console.WriteLine(dateTime.Date);
-
+            CalendarModel model = new CalendarModel();
+            model.AddNewEvent(11, 18, "MY BIRTHDAY!!!!");
+            model.PrintAllDays();
         }
     }
 }
+
