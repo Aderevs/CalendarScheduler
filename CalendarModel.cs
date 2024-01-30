@@ -51,7 +51,7 @@ namespace CalendarScheduler
                         break;
                     case 114:
                         currentEvent = "International Chernobyl Remembrance Day";
-                        currentDayType = TypeOfDate.NationalEvent;
+                        currentDayType = TypeOfDate.TragicEvent;
                         break;
                     case 128:
                         currentEvent = "Day of Remembrance and Victory over Nazism in World War II";
@@ -83,7 +83,7 @@ namespace CalendarScheduler
                         break;
                     case 330:
                         currentEvent = "Holodomor Remembrance Day";
-                        currentDayType = TypeOfDate.NationalEvent;
+                        currentDayType = TypeOfDate.TragicEvent;
                         break;
                     case 340:
                         currentEvent = "St. Nicholas Day";
@@ -310,6 +310,11 @@ namespace CalendarScheduler
                 DateOnly date = new DateOnly(i, month, day);
                 allDays[date] = new Day(TypeOfDate.Usual);
             }
+        }
+
+        public KeyValuePair<DateOnly, Day>[] GetMonthArray(int year, int month)
+        {
+            return allDays.Where(day=> day.Key.Year==year &&  day.Key.Month==month).ToArray();
         }
 
     }
