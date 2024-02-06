@@ -8,7 +8,7 @@
             model.AddNewEvent(11, 18, "MY BIRTHDAY!!!!");
             model.PrintAllDays();*/
             CalendarUserInterface userInterface = new CalendarUserInterface();
-            userInterface.MonthInterface(2024, 12);
+            userInterface.MonthInterface(2024, 1, 1);
         }
     }
 }

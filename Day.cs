@@ -21,6 +21,10 @@ namespace CalendarScheduler
         public TypeOfDate Type { get; set; }
         public string? NameOfEvents { get; set; }
 
+        public Day()
+        {
+            Type = TypeOfDate.Usual;
+        }
         public Day(TypeOfDate type)
         {
             Type = type;
