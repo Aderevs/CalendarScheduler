@@ -7,11 +7,22 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace CalendarScheduler
 {
+    delegate void AddEvent(int year, int month, int day, string nameOfEvent);
+    delegate void RemoveEvent(DateOnly date);
 
     internal class CalendarUserInterface
     {
-        public Action OnEnterPressed;
-        public KeyValuePair<DateOnly, Day>[][] GetMatrixForMonth(KeyValuePair<DateOnly, Day>[] Month)
+        public CalendarModel CalenderModel { get; set; }
+        public CalendarUserInterface(CalendarModel calenderModel)
+        {
+            CalenderModel = calenderModel;
+        }
+
+        public event AddEvent OnEventAdded;
+        public event RemoveEvent OnEventRemoved;
+        public event Action OnCalendarReseted;
+        public event Action OnDefaultEventsReturned;
+        private KeyValuePair<DateOnly, Day>[][] GetMatrixForMonth(KeyValuePair<DateOnly, Day>[] Month)
         {
             KeyValuePair<DateOnly, Day> firstDayOfMonth = Month[0];
             int daysInMonth = DateTime.DaysInMonth(firstDayOfMonth.Key.Year, firstDayOfMonth.Key.Month);
@@ -53,7 +64,7 @@ namespace CalendarScheduler
             }
             return daysOfMonth;
         }
-        public void PrintMonth(KeyValuePair<DateOnly, Day>[][] daysMatrix, int chosenDay)
+        private void PrintMonth(KeyValuePair<DateOnly, Day>[][] daysMatrix, int chosenDay)
         {
             Console.Write(daysMatrix[0][0].Key.Year + " ");
             switch (daysMatrix[0][0].Key.Month)
@@ -154,48 +165,47 @@ namespace CalendarScheduler
         }
         public void MonthInterface(int year, int month, int day)
         {
-            var model = new CalendarModel();
-            var monthMatrix = GetMatrixForMonth(model.GetMonthArray(year, month));
-            PrintMonth(monthMatrix, day);
-            int currerntDay = day;
-
+            var monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
             int daysInMonth = DateTime.DaysInMonth(year, month);
+
             ConsoleKeyInfo keyInfo;
             do
             {
+                Console.Clear();
+                PrintMonth(monthMatrix, day);
                 keyInfo = Console.ReadKey();
                 if (keyInfo.Key == ConsoleKey.D || keyInfo.Key == ConsoleKey.RightArrow)
                 {
-                    if (currerntDay + 1 <= daysInMonth)
+                    if (day + 1 <= daysInMonth)
                     {
-                        Console.Clear();
-                        PrintMonth(monthMatrix, ++currerntDay);
+                        day++;
                     }
                     else
                     {
+
                         if (month + 1 <= 12)
                         {
                             daysInMonth = DateTime.DaysInMonth(year, ++month);
+                            day = 1;
+                            monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
                         }
                         else
                         {
-                            month = 1;
-                            daysInMonth = DateTime.DaysInMonth(++year, month);
-
+                            if (year + 1 <= 2028)
+                            {
+                                month = 1;
+                                daysInMonth = DateTime.DaysInMonth(++year, month);
+                                day = 1;
+                                monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
+                            }
                         }
-
-                        monthMatrix = GetMatrixForMonth(model.GetMonthArray(year, month));
-                        currerntDay = 1;
-                        Console.Clear();
-                        PrintMonth(monthMatrix, currerntDay);
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.A || keyInfo.Key == ConsoleKey.LeftArrow)
                 {
-                    if (currerntDay - 1 >= 1)
+                    if (day - 1 >= 1)
                     {
-                        Console.Clear();
-                        PrintMonth(monthMatrix, --currerntDay);
+                        day--;
                     }
                     else
                     {
@@ -205,81 +215,179 @@ namespace CalendarScheduler
                         }
                         else
                         {
-                            month = 12;
-                            daysInMonth = DateTime.DaysInMonth(--year, month);
+                            if (year - 1 >= 2024)
+                            {
+                                month = 12;
+                                daysInMonth = DateTime.DaysInMonth(--year, month);
+                                monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
+                                day = daysInMonth;
+                            }
                         }
-                        monthMatrix = GetMatrixForMonth(model.GetMonthArray(year, month));
-                        currerntDay = daysInMonth;
-                        Console.Clear();
-                        PrintMonth(monthMatrix, currerntDay);
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
                 {
-                    if (currerntDay + 7 <= daysInMonth)
+                    if (day + 7 <= daysInMonth)
                     {
-                        currerntDay += 7;
-                        Console.Clear();
-                        PrintMonth(monthMatrix, currerntDay);
+                        day += 7;
                     }
                     else
                     {
-                        currerntDay = 7 - (daysInMonth - currerntDay);
                         if (month + 1 <= 12)
                         {
+                            day = 7 - (daysInMonth - day);
                             daysInMonth = DateTime.DaysInMonth(year, ++month);
+                            monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
                         }
                         else
                         {
-                            month = 1;
-                            daysInMonth = DateTime.DaysInMonth(++year, month);
-
+                            if (year + 1 <= 2028)
+                            {
+                                day = 7 - (daysInMonth - day);
+                                month = 1;
+                                daysInMonth = DateTime.DaysInMonth(++year, month);
+                                monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
+                            }
                         }
-                        monthMatrix = GetMatrixForMonth(model.GetMonthArray(year, month));
-                        Console.Clear();
-                        PrintMonth(monthMatrix, currerntDay);
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
                 {
-                    if (currerntDay - 7 >= 1)
+                    if (day - 7 >= 1)
                     {
-                        currerntDay -= 7;
-                        Console.Clear();
-                        PrintMonth(monthMatrix, currerntDay);
+                        day -= 7;
                     }
                     else
                     {
                         if (month - 1 >= 1)
                         {
                             daysInMonth = DateTime.DaysInMonth(year, --month);
+                            monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
+                            day = daysInMonth - (7 - day);
                         }
                         else
                         {
-                            month = 12;
-                            daysInMonth = DateTime.DaysInMonth(--year, month);
+                            if (year - 1 >= 2024)
+                            {
+                                month = 12;
+                                daysInMonth = DateTime.DaysInMonth(--year, month);
+                                monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
+                                day = daysInMonth - (7 - day);
+                            }
                         }
-                        monthMatrix = GetMatrixForMonth(model.GetMonthArray(year, month));
-                        currerntDay = daysInMonth - (7 - currerntDay);
-                        Console.Clear();
-                        PrintMonth(monthMatrix, currerntDay);
                     }
                 }
                 else if (keyInfo.Key == ConsoleKey.Enter)
                 {
-                    OnEnterPressed();
-                    Console.WriteLine("press any key to continue...");
-                    Console.ReadKey();
-                    Console.Clear();
-                    PrintMonth(monthMatrix, currerntDay);
-                }
-                else
-                {
-                    Console.Clear();
-                    PrintMonth(monthMatrix, currerntDay);
+                    DateOnly currentDate = ShowMenuToDo(new DateOnly(year, month, day));
+                    day = currentDate.Day;
+                    month = currentDate.Month;
+                    year = currentDate.Year;
+                    monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
                 }
             } while (keyInfo.Key != ConsoleKey.Escape);
         }
         public void MonthInterface(int year, int month) => MonthInterface(year, month, 1);
+
+        public DateOnly ShowMenuToDo(DateOnly date)
+        {
+            string[] menuStrings =
+            {
+                "0. Move to date:",
+                "1. Add new event;",
+                "2. Remove event;",
+                "3. Reset calendar;",
+                "4. Return all default events",
+                "Exit"
+            };
+
+            var monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(date.Year, date.Month));
+
+            bool exit = false;
+            int currentOprtion = 0;
+            ConsoleKeyInfo keyInfo;
+            int choice = 0;
+            while (!exit)
+            {
+                Console.Clear();
+                PrintMonth(monthMatrix, date.Day);
+                PrintMenu(menuStrings, currentOprtion);
+
+
+                keyInfo = Console.ReadKey();
+                if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
+                {
+                    currentOprtion = currentOprtion + 1 <= menuStrings.Length - 1 ? currentOprtion + 1 : 0;
+                }
+                else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
+                {
+                    currentOprtion = currentOprtion - 1 >= 0 ? currentOprtion - 1 : menuStrings.Length - 1;
+                }
+                else if (keyInfo.Key == ConsoleKey.Enter)
+                {
+                    choice = currentOprtion;
+                    break;
+                }
+            }
+            switch (choice)
+            {
+                case 0:
+                    Console.WriteLine("Enter date you want to move (Format: dd.mm.yyyy)");
+                    string dateToMove = Console.ReadLine();
+                    var splitedDateToMove = dateToMove.Split('.');
+                    if (splitedDateToMove.Length == 3)
+                    {
+                        int year, month, day;
+                        if (int.TryParse(splitedDateToMove[2], out year) &&
+                            int.TryParse(splitedDateToMove[1], out month) &&
+                            int.TryParse(splitedDateToMove[0], out day) &&
+                            year >= 2024 && year <= 2028 &&
+                            month >= 1 && month <= 12)
+                        {
+
+                            int daysInCurrentMonth = DateTime.DaysInMonth(year, month);
+                            if (day <= daysInCurrentMonth)
+                                return new DateOnly(year, month, day);
+
+                        }
+                    }
+                    Console.WriteLine("invalid format of input \nPress any key to continue...");
+                    Console.ReadKey();
+                    return date;
+
+                case 1:
+                    Console.WriteLine("Enter name of your event:");
+                    string? nameOfEvent = Console.ReadLine();
+                    OnEventAdded(date.Year, date.Month, date.Day, nameOfEvent);
+                    return date;
+                case 2:
+                    OnEventRemoved(date);
+                    return date;
+                case 3:
+                    OnCalendarReseted();
+                    return date;
+                case 4:
+                    OnDefaultEventsReturned();
+                    return date;
+                default:
+                    return date;
+            }
+        }
+        private void PrintMenu(string[] menuString, int choosenString)
+        {
+            for (int i = 0; i < menuString.Length; i++)
+            {
+                if (i == choosenString)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.BackgroundColor = ConsoleColor.Gray;
+                }
+                Console.WriteLine(menuString[i]);
+                if (i == choosenString)
+                {
+                    Console.ResetColor();
+                }
+            }
+        }
     }
 }

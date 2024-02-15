@@ -8,12 +8,12 @@ namespace CalendarScheduler
 {
     internal class CalendarModel
     {
-        private Dictionary<DateOnly, Day> allDays = new Dictionary<DateOnly, Day>();
+        private readonly Dictionary<DateOnly, Day> allDays = new Dictionary<DateOnly, Day>();
+        private readonly Dictionary<DateOnly, Day> allDefaultEvents = new Dictionary<DateOnly, Day>();
 
         public CalendarModel()
         {
             DateOnly currentDay;
-            TypeOfDate currentDayType = TypeOfDate.Usual;
             string? currentEvent = null;
             int dayCounterForEvents;
 
@@ -29,6 +29,8 @@ namespace CalendarScheduler
                     dayCounterForEvents--;
                 }
 
+                TypeOfDate currentDayType;
+                
                 //mark all events with a fixed date
                 switch (dayCounterForEvents)
                 {
@@ -100,29 +102,29 @@ namespace CalendarScheduler
 
                 //mark all events with a variable date
                 #region mark all events with a variable date
-                if (currentDay.Equals(new DateTime(2024, 5, 5)) ||
-                    currentDay.Equals(new DateTime(2025, 4, 20)) ||
-                    currentDay.Equals(new DateTime(2026, 4, 12)) ||
-                    currentDay.Equals(new DateTime(2027, 5, 2)) ||
-                    currentDay.Equals(new DateTime(2024, 4, 16)))
+                if (currentDay.Equals(new DateOnly(2024, 5, 5)) ||
+                    currentDay.Equals(new DateOnly(2025, 4, 20)) ||
+                    currentDay.Equals(new DateOnly(2026, 4, 12)) ||
+                    currentDay.Equals(new DateOnly(2027, 5, 2)) ||
+                    currentDay.Equals(new DateOnly(2028, 4, 16)))
                 {
                     currentEvent = "Easter";
                     currentDayType = TypeOfDate.HolyEvent;
                 }
-                else if (currentDay.Equals(new DateTime(2024, 3, 11)) ||
-                    currentDay.Equals(new DateTime(2025, 2, 24)) ||
-                    currentDay.Equals(new DateTime(2026, 2, 16)) ||
-                    currentDay.Equals(new DateTime(2027, 3, 8)) ||
-                    currentDay.Equals(new DateTime(2024, 2, 12)))
+                else if (currentDay.Equals(new DateOnly(2024, 3, 11)) ||
+                    currentDay.Equals(new DateOnly(2025, 2, 24)) ||
+                    currentDay.Equals(new DateOnly(2026, 2, 16)) ||
+                    currentDay.Equals(new DateOnly(2027, 3, 8)) ||
+                    currentDay.Equals(new DateOnly(2028, 2, 12)))
                 {
                     currentEvent = "Shrovetide";
                     currentDayType = TypeOfDate.HolyEvent;
                 }
-                else if (currentDay.Equals(new DateTime(2024, 5, 5).AddDays(49)) ||
-                    currentDay.Equals(new DateTime(2025, 4, 20).AddDays(49)) ||
-                    currentDay.Equals(new DateTime(2026, 4, 12).AddDays(49)) ||
-                    currentDay.Equals(new DateTime(2027, 5, 2).AddDays(49)) ||
-                    currentDay.Equals(new DateTime(2024, 4, 16).AddDays(49)))
+                else if (currentDay.Equals(new DateOnly(2024, 5, 5).AddDays(49)) ||
+                    currentDay.Equals(new DateOnly(2025, 4, 20).AddDays(49)) ||
+                    currentDay.Equals(new DateOnly(2026, 4, 12).AddDays(49)) ||
+                    currentDay.Equals(new DateOnly(2027, 5, 2).AddDays(49)) ||
+                    currentDay.Equals(new DateOnly(2028, 4, 16).AddDays(49)))
                 {
                     currentEvent = "Trinity";
                     currentDayType = TypeOfDate.HolyEvent;
@@ -130,6 +132,10 @@ namespace CalendarScheduler
                 #endregion
 
                 allDays.Add(currentDay, new Day(currentDayType, currentEvent));
+                if(currentDayType != TypeOfDate.Usual)
+                {
+                    allDefaultEvents.Add(currentDay, new Day(currentDayType, currentEvent));
+                }
             }
 
         }
@@ -150,7 +156,8 @@ namespace CalendarScheduler
             else
             {
                 Day newDay = allDays[date];
-                newDay.NameOfEvents += "; " + newEvent;
+                newDay.NameOfEvents += ";\n" + newEvent;
+                newDay.Type = TypeOfDate.PersonalEvent;
                 allDays[date] = newDay;
             }
 
@@ -167,7 +174,8 @@ namespace CalendarScheduler
                 else
                 {
                     Day newDay = allDays[date];
-                    newDay.NameOfEvents += "; " + newEvent;
+                    newDay.NameOfEvents += ";\n" + newEvent;
+                    newDay.Type = TypeOfDate.PersonalEvent;
                     allDays[date] = newDay;
                 }
             }
@@ -178,15 +186,30 @@ namespace CalendarScheduler
         {
             allDays[date] = new Day(TypeOfDate.Usual);
         }
-        public void RemoveEvent(int month, int day)
+        /*public void RemoveEvent(int month, int day)
         {
+            Day currentDay = new Day();
             for (int i = 2024; i <= 2028; i++)
             {
                 DateOnly date = new DateOnly(i, month, day);
-                allDays[date] = new Day(TypeOfDate.Usual);
+                if (allDays[date].Equals(currentDay))
+                {
+                    currentDay = allDays[date];
+                    allDays[date] = new Day(TypeOfDate.Usual);
+                }
+            }
+        }*/
+
+        public void ResetDefaultEvents()
+        {
+            foreach(var day in allDays)
+            {
+                if (allDefaultEvents.ContainsKey(day.Key))
+                {
+                    allDays[day.Key] = allDefaultEvents[day.Key];
+                }
             }
         }
-
         public KeyValuePair<DateOnly, Day>[] GetMonthArray(int year, int month)
         {
             return allDays.Where(day=> day.Key.Year==year &&  day.Key.Month==month).ToArray();

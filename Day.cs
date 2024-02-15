@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -29,10 +30,18 @@ namespace CalendarScheduler
         {
             Type = type;
         }
-        public Day(TypeOfDate type, string nameOfEvent):this(type)
+        public Day(TypeOfDate type, string nameOfEvent) : this(type)
         {
             NameOfEvents = nameOfEvent;
         }
-
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            if (obj is Day)
+            {
+                Day other = (Day)obj;
+                return other.Type == Type && other.NameOfEvents == NameOfEvents;
+            }
+            return false;
+        }
     }
 }
