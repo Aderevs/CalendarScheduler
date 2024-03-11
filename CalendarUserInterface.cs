@@ -120,33 +120,34 @@ namespace CalendarScheduler
             {
                 for (int j = 0; j < daysMatrix[i].Length; j++)
                 {
+                    int lastIndex = daysMatrix[i][j].Value.Type.Count - 1;
                     if (daysMatrix[i][j].Key.Day == chosenDay)
                     {
                         Console.BackgroundColor = ConsoleColor.Gray;
                         Console.ForegroundColor = ConsoleColor.Black;
                         dayToWrite = daysMatrix[i][j].Value;
                     }
-                    else if (daysMatrix[i][j].Value.Type == TypeOfDate.HolyEvent)
+                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.HolyEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.ForegroundColor = ConsoleColor.Black;
                     }
-                    else if (daysMatrix[i][j].Value.Type == TypeOfDate.NationalEvent)
+                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.NationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Blue;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type == TypeOfDate.InternationalEvent)
+                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.InternationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkGreen;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type == TypeOfDate.PersonalEvent)
+                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.PersonalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Magenta;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type == TypeOfDate.TragicEvent)
+                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.TragicEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
                         Console.ForegroundColor = ConsoleColor.Black;
@@ -158,9 +159,38 @@ namespace CalendarScheduler
                 Console.WriteLine();
             }
 
-            if (dayToWrite.Type != TypeOfDate.Usual)
+            if (dayToWrite.Type[0] != TypeOfDate.Usual)
             {
-                Console.WriteLine(dayToWrite.NameOfEvents);
+                for(int i = 0; i < dayToWrite.NumberOfEvents; i++)
+                {
+                    if (dayToWrite.Type[i] == TypeOfDate.HolyEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                    }
+                    else if (dayToWrite.Type[i] == TypeOfDate.NationalEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.Blue;
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    else if (dayToWrite.Type[i] == TypeOfDate.InternationalEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.DarkGreen;
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    else if (dayToWrite.Type[i] == TypeOfDate.PersonalEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.Magenta;
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    else if (dayToWrite.Type[i] == TypeOfDate.TragicEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.DarkRed;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                    }
+                    Console.WriteLine(dayToWrite.NameOfEvents[i]);
+                }
+                Console.ResetColor();
             }
         }
         public void MonthInterface(int year, int month, int day)
@@ -174,6 +204,7 @@ namespace CalendarScheduler
                 Console.Clear();
                 PrintMonth(monthMatrix, day);
                 keyInfo = Console.ReadKey();
+                
                 if (keyInfo.Key == ConsoleKey.D || keyInfo.Key == ConsoleKey.RightArrow)
                 {
                     if (day + 1 <= daysInMonth)
@@ -212,6 +243,8 @@ namespace CalendarScheduler
                         if (month - 1 >= 1)
                         {
                             daysInMonth = DateTime.DaysInMonth(year, --month);
+                            day = daysInMonth;
+                            monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(year, month));
                         }
                         else
                         {

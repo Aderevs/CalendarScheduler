@@ -17,29 +17,43 @@ namespace CalendarScheduler
         PersonalEvent,
         TragicEvent
     }
-    internal struct Day
+    internal class Day
     {
-        public TypeOfDate Type { get; set; }
-        public string? NameOfEvents { get; set; }
+        public List<TypeOfDate> Type { get; set; }
+        public List<string?> NameOfEvents { get; set; }
+        public int NumberOfEvents
+        {
+            get
+            {
+                return Type.Count;
+            }
+        }
 
         public Day()
         {
-            Type = TypeOfDate.Usual;
+            Type = new List<TypeOfDate>();
+            NameOfEvents = new List<string>();
+            Type.Add(TypeOfDate.Usual);
+            NameOfEvents.Add(null);
         }
         public Day(TypeOfDate type)
         {
-            Type = type;
+            Type = new List<TypeOfDate>();
+            NameOfEvents = new List<string>();
+            Type.Add(type);
+            NameOfEvents.Add(null);
         }
         public Day(TypeOfDate type, string nameOfEvent) : this(type)
         {
-            NameOfEvents = nameOfEvent;
+            NameOfEvents = new List<string>();
+            NameOfEvents.Add(nameOfEvent);
         }
         public override bool Equals([NotNullWhen(true)] object? obj)
         {
             if (obj is Day)
             {
                 Day other = (Day)obj;
-                return other.Type == Type && other.NameOfEvents == NameOfEvents;
+                return other.Type.Equals(Type) && other.NameOfEvents.Equals(NameOfEvents);
             }
             return false;
         }

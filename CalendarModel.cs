@@ -12,20 +12,20 @@ namespace CalendarScheduler
     {
         private readonly Dictionary<DateOnly, Day> _allDays;
         private readonly Dictionary<DateOnly, Day> _allDefaultEvents;
-        private string _allDaysJsonFilePath = "allDays.json";
-        private string _allDefaultEventsJsonFilePath = "allDefaultEvents.json";
+        private const string _allDaysJsonFilePath = "allDays.json";
+        private const string _allDefaultEventsJsonFilePath = "allDefaultEvents.json";
         public CalendarModel()
         {
             FileInfo allDaysFile = new FileInfo(_allDaysJsonFilePath);
             FileInfo allDefaultEventsFile = new FileInfo(_allDefaultEventsJsonFilePath);
 
-            if(allDaysFile.Exists && allDefaultEventsFile.Exists)
+            if (allDaysFile.Exists && allDefaultEventsFile.Exists)
             {
                 _allDays = DeserializationFromJson(_allDaysJsonFilePath);
                 _allDefaultEvents = DeserializationFromJson(_allDefaultEventsJsonFilePath);
             }
 
-            if(!allDaysFile.Exists || !allDefaultEventsFile.Exists ||
+            if (!allDaysFile.Exists || !allDefaultEventsFile.Exists ||
                 _allDays == null || _allDefaultEvents == null)
             {
                 _allDays = new Dictionary<DateOnly, Day>();
@@ -46,7 +46,7 @@ namespace CalendarScheduler
                     }
 
                     TypeOfDate currentDayType;
-                
+
                     //mark all events with a fixed date
                     switch (dayCounterForEvents)
                     {
@@ -148,7 +148,7 @@ namespace CalendarScheduler
                     #endregion
 
                     _allDays.Add(currentDay, new Day(currentDayType, currentEvent));
-                    if(currentDayType != TypeOfDate.Usual)
+                    if (currentDayType != TypeOfDate.Usual)
                     {
                         _allDefaultEvents.Add(currentDay, new Day(currentDayType, currentEvent));
                     }
@@ -168,34 +168,30 @@ namespace CalendarScheduler
 
         public void AddNewEvent(DateOnly date, string newEvent)
         {
-            if(_allDays[date].NameOfEvents == null)
+            if (_allDays[date].Type[0] == TypeOfDate.Usual)
             {
                 _allDays[date] = new Day(TypeOfDate.PersonalEvent, newEvent);
             }
             else
             {
-                Day newDay = _allDays[date];
-                newDay.NameOfEvents += ";\n" + newEvent;
-                newDay.Type = TypeOfDate.PersonalEvent;
-                _allDays[date] = newDay;
+                _allDays[date].Type.Add(TypeOfDate.PersonalEvent);
+                _allDays[date].NameOfEvents.Add(newEvent);
             }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
         }
         public void AddNewEvent(int month, int day, string newEvent)
         {
-            for(int i = 2024; i <= 2028; i++)
+            for (int i = 2024; i <= 2028; i++)
             {
                 DateOnly date = new DateOnly(i, month, day);
-                if(_allDays[date].NameOfEvents == null)
+                if (_allDays[date].Type[0] == TypeOfDate.Usual)
                 {
                     _allDays[date] = new Day(TypeOfDate.PersonalEvent, newEvent);
                 }
                 else
                 {
-                    Day newDay = _allDays[date];
-                    newDay.NameOfEvents += ";\n" + newEvent;
-                    newDay.Type = TypeOfDate.PersonalEvent;
-                    _allDays[date] = newDay;
+                    _allDays[date].Type.Add(TypeOfDate.PersonalEvent);
+                    _allDays[date].NameOfEvents.Add(newEvent);
                 }
             }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
@@ -203,26 +199,37 @@ namespace CalendarScheduler
 
         public void RemoveEvent(DateOnly date)
         {
-            _allDays[date] = new Day(TypeOfDate.Usual);
+            if(_allDays[date].NumberOfEvents > 1)
+            {
+                int lastIndex = _allDays[date].NumberOfEvents - 1;
+                _allDays[date].Type.RemoveAt(lastIndex);
+                _allDays[date].NameOfEvents.RemoveAt(lastIndex);
+            }
+            else
+            {
+                _allDays[date] = new Day(TypeOfDate.Usual);
+            }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
         }
-        /*public void RemoveEvent(int month, int day)
+        public void RemoveEvent(DateOnly date, byte numberOfEvent)
         {
-            Day currentDay = new Day();
-            for (int i = 2024; i <= 2028; i++)
+            if(numberOfEvent < _allDays[date].NumberOfEvents)
             {
-                DateOnly date = new DateOnly(i, month, day);
-                if (allDays[date].Equals(currentDay))
+                _allDays[date].Type.RemoveAt(numberOfEvent);
+                _allDays[date].NameOfEvents.RemoveAt(numberOfEvent);
+                if (_allDays[date].NumberOfEvents < 1)
                 {
-                    currentDay = allDays[date];
-                    allDays[date] = new Day(TypeOfDate.Usual);
+                    _allDays[date] = new Day(TypeOfDate.Usual);
                 }
             }
-        }*/
-
+            else
+            {
+                throw new ArgumentException("this day don't has to many events");
+            }
+        }
         public void ResetDefaultEvents()
         {
-            foreach(var day in _allDays)
+            foreach (var day in _allDays)
             {
                 if (_allDefaultEvents.ContainsKey(day.Key))
                 {
@@ -233,14 +240,14 @@ namespace CalendarScheduler
         }
         public KeyValuePair<DateOnly, Day>[] GetMonthArray(int year, int month)
         {
-            return _allDays.Where(day=> day.Key.Year==year &&  day.Key.Month==month).ToArray();
+            return _allDays.Where(day => day.Key.Year == year && day.Key.Month == month).ToArray();
         }
 
         private void SerializationDatesToJson(Dictionary<DateOnly, Day> dates, string filePath)
         {
             var jsonString = JsonSerializer.Serialize(dates);
 
-            using (var writer =  new StreamWriter(filePath))
+            using (var writer = new StreamWriter(filePath))
             {
                 writer.Write(jsonString);
             }
