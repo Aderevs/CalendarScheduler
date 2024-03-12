@@ -59,8 +59,7 @@ namespace CalendarScheduler
             choice = choice.Trim().ToLowerInvariant();
             if (choice == "y")
             {
-                _model = new CalendarModel();
-                _view.CalenderModel = _model;
+                _model.ResetOrGenerate();
             }
         }
     }
