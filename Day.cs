@@ -20,7 +20,7 @@ namespace CalendarScheduler
     internal class Day
     {
         public List<TypeOfDate> Type { get; set; }
-        public List<string?> NameOfEvents { get; set; }
+        public List<string?> NameOfEvent { get; set; }
         public int NumberOfEvents
         {
             get
@@ -32,30 +32,36 @@ namespace CalendarScheduler
         public Day()
         {
             Type = new List<TypeOfDate>();
-            NameOfEvents = new List<string>();
+            NameOfEvent = new List<string>();
             Type.Add(TypeOfDate.Usual);
-            NameOfEvents.Add(null);
+            NameOfEvent.Add(null);
         }
         public Day(TypeOfDate type)
         {
             Type = new List<TypeOfDate>();
-            NameOfEvents = new List<string>();
+            NameOfEvent = new List<string>();
             Type.Add(type);
-            NameOfEvents.Add(null);
+            NameOfEvent.Add(null);
         }
         public Day(TypeOfDate type, string nameOfEvent) : this(type)
         {
-            NameOfEvents = new List<string>();
-            NameOfEvents.Add(nameOfEvent);
+            NameOfEvent = new List<string>();
+            NameOfEvent.Add(nameOfEvent);
         }
-        public override bool Equals([NotNullWhen(true)] object? obj)
+        public Day(List<TypeOfDate> type, List<string?> nameOfEvent)
+        {
+            Type = type;
+            NameOfEvent = nameOfEvent;
+        }
+
+        /*public override bool Equals([NotNullWhen(true)] object? obj)
         {
             if (obj is Day)
             {
                 Day other = (Day)obj;
-                return other.Type.Equals(Type) && other.NameOfEvents.Equals(NameOfEvents);
+                return other.Type.Equals(Type) && other.NameOfEvent.Equals(NameOfEvent);
             }
             return false;
-        }
+        }*/
     }
 }

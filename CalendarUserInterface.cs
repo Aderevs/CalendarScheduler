@@ -20,10 +20,10 @@ namespace CalendarScheduler
         }
 
         public event Action<int, int, int, string> OnEventAdded;
-        public event Action<DateOnly> OnEventRemoved;
+        public event Action<KeyValuePair<DateOnly, Day>> OnEventRemoved;
         public event Action OnCalendarReseted;
         public event Action OnDefaultEventsReturned;
-        public event Action OnEventEdited;
+        public event Action<KeyValuePair<DateOnly, Day>> OnEventEdited;
         private KeyValuePair<DateOnly, Day>[][] GetMatrixForMonth(KeyValuePair<DateOnly, Day>[] Month)
         {
             KeyValuePair<DateOnly, Day> firstDayOfMonth = Month[0];
@@ -169,28 +169,33 @@ namespace CalendarScheduler
                     {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.ForegroundColor = ConsoleColor.Black;
+                        Console.WriteLine("Holy Event:");
                     }
                     else if (dayToWrite.Type[i] == TypeOfDate.NationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Blue;
                         Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("National Event:");
                     }
                     else if (dayToWrite.Type[i] == TypeOfDate.InternationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkGreen;
                         Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("International Event:");
                     }
                     else if (dayToWrite.Type[i] == TypeOfDate.PersonalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Magenta;
                         Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("Personal Event:");
                     }
                     else if (dayToWrite.Type[i] == TypeOfDate.TragicEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
                         Console.ForegroundColor = ConsoleColor.Black;
+                        Console.WriteLine("Tragic Event:");
                     }
-                    Console.WriteLine(dayToWrite.NameOfEvents[i]);
+                    Console.WriteLine(dayToWrite.NameOfEvent[i]);
                 }
                 Console.ResetColor();
             }
@@ -353,7 +358,7 @@ namespace CalendarScheduler
 
         public DateOnly ShowMenuToDo(KeyValuePair<DateOnly, Day> date)
         {
-            
+
             string[] menuStrings =
             {
                 "0. Move to date:",
@@ -432,8 +437,8 @@ namespace CalendarScheduler
             string[] menuStrings =
             {
                 "1. Add event;",
-                "1. Remove event;",
-                "2. Edit event;",
+                "2. Remove event;",
+                "3. Edit event;",
                 "Exit"
             };
             bool exit = false;
@@ -444,6 +449,40 @@ namespace CalendarScheduler
             {
                 Console.Clear();
                 Console.WriteLine(date.Key);
+                if (date.Value.Type[0] != TypeOfDate.Usual)
+                {
+                    for (int i = 0; i < date.Value.NumberOfEvents; i++)
+                    {
+                        if (date.Value.Type[i] == TypeOfDate.HolyEvent)
+                        {
+                            Console.BackgroundColor = ConsoleColor.Yellow;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                        }
+                        else if (date.Value.Type[i] == TypeOfDate.NationalEvent)
+                        {
+                            Console.BackgroundColor = ConsoleColor.Blue;
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        else if (date.Value.Type[i] == TypeOfDate.InternationalEvent)
+                        {
+                            Console.BackgroundColor = ConsoleColor.DarkGreen;
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        else if (date.Value.Type[i] == TypeOfDate.PersonalEvent)
+                        {
+                            Console.BackgroundColor = ConsoleColor.Magenta;
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        else if (date.Value.Type[i] == TypeOfDate.TragicEvent)
+                        {
+                            Console.BackgroundColor = ConsoleColor.DarkRed;
+                            Console.ForegroundColor = ConsoleColor.Black;
+                        }
+                        Console.WriteLine(date.Value.NameOfEvent[i]);
+                    }
+                    Console.ResetColor();
+                }
+
                 PrintMenu(menuStrings, currentOprtion);
 
 
@@ -470,10 +509,10 @@ namespace CalendarScheduler
                     OnEventAdded(date.Key.Year, date.Key.Month, date.Key.Day, nameOfEvent);
                     break;
                 case 1:
-                    OnEventRemoved(date.Key);
+                    OnEventRemoved(date);
                     break;
                 case 2:
-                    OnEventEdited();
+                    OnEventEdited(date);
                     break;
                 default:
                     break;

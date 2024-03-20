@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 namespace CalendarScheduler
 {
@@ -152,11 +145,16 @@ namespace CalendarScheduler
                     currentDayType = TypeOfDate.HolyEvent;
                 }
                 #endregion
-
-                _allDays.Add(currentDay, new Day(currentDayType, currentEvent));
+                Day dayToAdd = new Day(currentDayType, currentEvent);
+                _allDays.Add(currentDay, dayToAdd);
                 if (currentDayType != TypeOfDate.Usual)
                 {
-                    _allDefaultEvents.Add(currentDay, new Day(currentDayType, currentEvent));
+                    if (_allDefaultEvents.ContainsKey(currentDay))
+                    {
+                        _allDefaultEvents[currentDay].Type.Add(currentDayType);
+                        _allDefaultEvents[currentDay].NameOfEvent.Add(currentEvent);
+                    }
+                    _allDefaultEvents.Add(currentDay, dayToAdd);
                 }
             }
 
@@ -168,7 +166,7 @@ namespace CalendarScheduler
         {
             foreach (KeyValuePair<DateOnly, Day> date in _allDays)
             {
-                Console.WriteLine(date.Key.ToString("yyyy.MM.dd") + " " + date.Value.NameOfEvents);
+                Console.WriteLine(date.Key.ToString("yyyy.MM.dd") + " " + date.Value.NameOfEvent);
             }
         }
 
@@ -181,7 +179,7 @@ namespace CalendarScheduler
             else
             {
                 _allDays[date].Type.Add(TypeOfDate.PersonalEvent);
-                _allDays[date].NameOfEvents.Add(newEvent);
+                _allDays[date].NameOfEvent.Add(newEvent);
             }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
         }
@@ -196,33 +194,34 @@ namespace CalendarScheduler
                 }
                 else
                 {
+                   
                     _allDays[date].Type.Add(TypeOfDate.PersonalEvent);
-                    _allDays[date].NameOfEvents.Add(newEvent);
+                    _allDays[date].NameOfEvent.Add(newEvent);
                 }
             }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
         }
-
-        public void RemoveEvent(DateOnly date)
-        {
-            if(_allDays[date].NumberOfEvents > 1)
-            {
-                int lastIndex = _allDays[date].NumberOfEvents - 1;
-                _allDays[date].Type.RemoveAt(lastIndex);
-                _allDays[date].NameOfEvents.RemoveAt(lastIndex);
-            }
-            else
-            {
-                _allDays[date] = new Day(TypeOfDate.Usual);
-            }
-            SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
-        }
+        /*        private void AddDay(DateOnly date, (TypeOfDate, string) info)
+                {
+                    if (_allDays[date].Type[0] == TypeOfDate.Usual)
+                    {
+                        _allDays[date] = new Day(info.Item1, info.Item2);
+                    }
+                    else
+                    {
+                        _allDays[date].Type.Add(info.Item1);
+                        _allDays[date].NameOfEvent.Add(info.Item2);
+                    }
+                    SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
+                }
+        */
+        public void RemoveEvent(DateOnly date) => RemoveEvent(date, (byte)(_allDays[date].NumberOfEvents - 1));
         public void RemoveEvent(DateOnly date, byte numberOfEvent)
         {
-            if(numberOfEvent < _allDays[date].NumberOfEvents)
+            if (numberOfEvent <= _allDays[date].NumberOfEvents)
             {
-                _allDays[date].Type.RemoveAt(numberOfEvent);
-                _allDays[date].NameOfEvents.RemoveAt(numberOfEvent);
+                _allDays[date].Type.RemoveAt(numberOfEvent - 1);
+                _allDays[date].NameOfEvent.RemoveAt(numberOfEvent - 1);
                 if (_allDays[date].NumberOfEvents < 1)
                 {
                     _allDays[date] = new Day(TypeOfDate.Usual);
@@ -232,18 +231,49 @@ namespace CalendarScheduler
             {
                 throw new ArgumentException("this day don't has to many events");
             }
+            SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
         }
         public void ResetDefaultEvents()
         {
+            _allDefaultEvents = DeserializationFromJson(_allDefaultEventsJsonFilePath);
             foreach (var day in _allDays)
             {
                 if (_allDefaultEvents.ContainsKey(day.Key))
                 {
-                    _allDays[day.Key] = _allDefaultEvents[day.Key];
+                    var thisDayEvents = new List<string>();
+                    if (_allDays[day.Key].NumberOfEvents > 1 || _allDays[day.Key].Type[0] == TypeOfDate.PersonalEvent)
+                    {
+                        for (int i = 0; i < day.Value.NumberOfEvents; i++)
+                        {
+                            Console.WriteLine();
+                            if (day.Value.Type[i] == TypeOfDate.PersonalEvent)
+                            {
+                                thisDayEvents.Add(day.Value.NameOfEvent[i]);
+                            }
+                        }
+                    }
+                    _allDays[day.Key] = new Day(_allDefaultEvents[day.Key].Type, _allDefaultEvents[day.Key].NameOfEvent);
+                    foreach (var eventInfo in thisDayEvents)
+                    {
+                        AddNewEvent(day.Key, eventInfo);
+                    }
+
                 }
             }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
         }
+        public void EditEventDescription(DateOnly date, byte numberOfEvent, string newDescription)
+        {
+            if (_allDays[date].NumberOfEvents <= numberOfEvent)
+            {
+                _allDays[date].NameOfEvent[numberOfEvent - 1] = newDescription;
+            }
+            else
+            {
+                throw new ArgumentException("Attempt to change event description with number that don't exist");
+            }
+        }
+        public void EditEventDescription(DateOnly date, string newDescription) => EditEventDescription(date, 1, newDescription);
         public KeyValuePair<DateOnly, Day>[] GetMonthArray(int year, int month)
         {
             return _allDays.Where(day => day.Key.Year == year && day.Key.Month == month).ToArray();
@@ -266,6 +296,8 @@ namespace CalendarScheduler
             dates = JsonSerializer.Deserialize<Dictionary<DateOnly, Day>>(json);
             return dates;
         }
+
+
 
     }
 }
