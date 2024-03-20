@@ -123,6 +123,11 @@ namespace CalendarScheduler
                 for (int j = 0; j < daysMatrix[i].Length; j++)
                 {
                     int lastIndex = daysMatrix[i][j].Value.Type.Count - 1;
+                    if(daysMatrix[i][j].Key.DayOfWeek ==DayOfWeek.Saturday|| daysMatrix[i][j].Key.DayOfWeek == DayOfWeek.Sunday)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        dayToWrite = daysMatrix[i][j].Value;
+                    }
                     if (daysMatrix[i][j].Key.Day == chosenDay)
                     {
                         Console.BackgroundColor = ConsoleColor.Gray;

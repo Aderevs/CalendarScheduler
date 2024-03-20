@@ -32,20 +32,20 @@ namespace CalendarScheduler
         public Day()
         {
             Type = new List<TypeOfDate>();
-            NameOfEvent = new List<string>();
+            NameOfEvent = new ();
             Type.Add(TypeOfDate.Usual);
             NameOfEvent.Add(null);
         }
         public Day(TypeOfDate type)
         {
             Type = new List<TypeOfDate>();
-            NameOfEvent = new List<string>();
+            NameOfEvent = new ();
             Type.Add(type);
             NameOfEvent.Add(null);
         }
         public Day(TypeOfDate type, string nameOfEvent) : this(type)
         {
-            NameOfEvent = new List<string>();
+            NameOfEvent = new ();
             NameOfEvent.Add(nameOfEvent);
         }
         public Day(List<TypeOfDate> type, List<string?> nameOfEvent)
@@ -53,15 +53,5 @@ namespace CalendarScheduler
             Type = type;
             NameOfEvent = nameOfEvent;
         }
-
-        /*public override bool Equals([NotNullWhen(true)] object? obj)
-        {
-            if (obj is Day)
-            {
-                Day other = (Day)obj;
-                return other.Type.Equals(Type) && other.NameOfEvent.Equals(NameOfEvent);
-            }
-            return false;
-        }*/
     }
 }

@@ -200,21 +200,7 @@ namespace CalendarScheduler
                 }
             }
             SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
-        }
-        /*        private void AddDay(DateOnly date, (TypeOfDate, string) info)
-                {
-                    if (_allDays[date].Type[0] == TypeOfDate.Usual)
-                    {
-                        _allDays[date] = new Day(info.Item1, info.Item2);
-                    }
-                    else
-                    {
-                        _allDays[date].Type.Add(info.Item1);
-                        _allDays[date].NameOfEvent.Add(info.Item2);
-                    }
-                    SerializationDatesToJson(_allDays, _allDaysJsonFilePath);
-                }
-        */
+        } 
         public void RemoveEvent(DateOnly date) => RemoveEvent(date, (byte)(_allDays[date].NumberOfEvents - 1));
         public void RemoveEvent(DateOnly date, byte numberOfEvent)
         {

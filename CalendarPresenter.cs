@@ -8,7 +8,7 @@ namespace CalendarScheduler
 {
     internal class CalendarPresenter
     {
-        private CalendarModel _model;
+        private readonly CalendarModel _model;
         private readonly CalendarUserInterface _view;
 
         public CalendarPresenter()
