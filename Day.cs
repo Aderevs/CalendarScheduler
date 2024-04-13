@@ -21,6 +21,7 @@ namespace CalendarScheduler
     {
         public List<TypeOfDate> Type { get; set; }
         public List<string?> NameOfEvent { get; set; }
+        public SortedSet<TimeBoundEvent> TimeBoundEvents { get; set; }
         public int NumberOfEvents
         {
             get
@@ -32,26 +33,33 @@ namespace CalendarScheduler
         public Day()
         {
             Type = new List<TypeOfDate>();
-            NameOfEvent = new ();
+            NameOfEvent = new();
+            TimeBoundEvents = [];
             Type.Add(TypeOfDate.Usual);
             NameOfEvent.Add(null);
         }
         public Day(TypeOfDate type)
         {
             Type = new List<TypeOfDate>();
-            NameOfEvent = new ();
+            NameOfEvent = new();
+            TimeBoundEvents = [];
             Type.Add(type);
             NameOfEvent.Add(null);
         }
         public Day(TypeOfDate type, string nameOfEvent) : this(type)
         {
-            NameOfEvent = new ();
+            NameOfEvent = new();
             NameOfEvent.Add(nameOfEvent);
+        }
+        public Day(TypeOfDate type, string nameOfEvent, SortedSet<TimeBoundEvent> timeBoundEvents) : this(type, nameOfEvent)
+        {
+            TimeBoundEvents = timeBoundEvents;
         }
         public Day(List<TypeOfDate> type, List<string?> nameOfEvent)
         {
             Type = type;
             NameOfEvent = nameOfEvent;
+            TimeBoundEvents = [];
         }
     }
 }

@@ -8,22 +8,22 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CalendarScheduler
 {
-    //delegate void AddEvent(int year, int month, int day, string nameOfEvent);
-    //delegate void RemoveEvent(DateOnly date);
-
     internal class CalendarUserInterface
     {
-        public CalendarModel CalenderModel { get; set; }
-        public CalendarUserInterface(CalendarModel calenderModel)
+        public CalendarModel CalendarModel { get; set; }
+        public CalendarUserInterface(CalendarModel calendarModel)
         {
-            CalenderModel = calenderModel;
+            CalendarModel = calendarModel;
         }
 
-        public event Action<int, int, int, string> OnEventAdded;
-        public event Action<KeyValuePair<DateOnly, Day>> OnEventRemoved;
-        public event Action OnCalendarReseted;
-        public event Action OnDefaultEventsReturned;
-        public event Action<KeyValuePair<DateOnly, Day>> OnEventEdited;
+        public event Action<int, int, int, string>? OnEventAdded;
+        public event Action<KeyValuePair<DateOnly, Day>>? OnEventRemoved;
+        public event Action? OnCalendarReset;
+        public event Action? OnDefaultEventsReturned;
+        public event Action<KeyValuePair<DateOnly, Day>>? OnEventEdited;
+        public static readonly object _consoleLock = new object();
+        private int _year, _month, _day;
+        private bool _isReminderRun = false;
         private KeyValuePair<DateOnly, Day>[][] GetMatrixForMonth(KeyValuePair<DateOnly, Day>[] Month)
         {
             KeyValuePair<DateOnly, Day> firstDayOfMonth = Month[0];
@@ -46,7 +46,7 @@ namespace CalendarScheduler
             for (int i = 0; i < daysOfMonth[0].Length; i++)
             {
                 currentDayCounter++;
-                daysOfMonth[0][i] = Month.Where(day => day.Key.Day == currentDayCounter).First();
+                daysOfMonth[0][i] = Month.First(day => day.Key.Day == currentDayCounter);
             }
             for (int i = 1; i < 6; i++)
             {
@@ -61,7 +61,7 @@ namespace CalendarScheduler
                 for (int j = 0; j < 7 && currentDayCounter < daysInMonth; j++)
                 {
                     currentDayCounter++;
-                    daysOfMonth[i][j] = Month.Where(day => day.Key.Day == currentDayCounter).First();
+                    daysOfMonth[i][j] = Month.First(day => day.Key.Day == currentDayCounter);
                 }
             }
             return daysOfMonth;
@@ -69,46 +69,25 @@ namespace CalendarScheduler
         private void PrintMonth(KeyValuePair<DateOnly, Day>[][] daysMatrix, int chosenDay)
         {
             Console.Write(daysMatrix[0][0].Key.Year + " ");
-            switch (daysMatrix[0][0].Key.Month)
-            {
-                case 1:
-                    Console.WriteLine("January");
-                    break;
-                case 2:
-                    Console.WriteLine("February");
-                    break;
-                case 3:
-                    Console.WriteLine("March");
-                    break;
-                case 4:
-                    Console.WriteLine("April");
-                    break;
-                case 5:
-                    Console.WriteLine("May");
-                    break;
-                case 6:
-                    Console.WriteLine("June");
-                    break;
-                case 7:
-                    Console.WriteLine("July");
-                    break;
-                case 8:
-                    Console.WriteLine("August");
-                    break;
-                case 9:
-                    Console.WriteLine("September");
-                    break;
-                case 10:
-                    Console.WriteLine("October");
-                    break;
-                case 11:
-                    Console.WriteLine("November");
-                    break;
-                case 12:
-                    Console.WriteLine("December");
-                    break;
-            }
-
+            Console.WriteLine
+                (
+                daysMatrix[0][0].Key.Month
+                switch
+                {
+                    1 => "January",
+                    2 => "February",
+                    3 => "March",
+                    4 => "April",
+                    5 => "May",
+                    6 => "June",
+                    7 => "July",
+                    8 => "August",
+                    9 => "September",
+                    10 => "October",
+                    11 => "November",
+                    12 => "December",
+                    _ => ""
+                });
             Console.WriteLine("Mon" + "\t" + "Tus" + "\t" + "Wed" + "\t" + "Thi" + "\t" + "Fri" + "\t" + "Sat" + "\t" + "Sun");
             if (daysMatrix[0].Length > 0)
             {
@@ -123,16 +102,25 @@ namespace CalendarScheduler
                 for (int j = 0; j < daysMatrix[i].Length; j++)
                 {
                     int lastIndex = daysMatrix[i][j].Value.Type.Count - 1;
-                    if(daysMatrix[i][j].Key.DayOfWeek ==DayOfWeek.Saturday|| daysMatrix[i][j].Key.DayOfWeek == DayOfWeek.Sunday)
+                    if (daysMatrix[i][j].Key.DayOfWeek == DayOfWeek.Saturday || daysMatrix[i][j].Key.DayOfWeek == DayOfWeek.Sunday)
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
-                        dayToWrite = daysMatrix[i][j].Value;
                     }
                     if (daysMatrix[i][j].Key.Day == chosenDay)
                     {
                         Console.BackgroundColor = ConsoleColor.Gray;
                         Console.ForegroundColor = ConsoleColor.Black;
                         dayToWrite = daysMatrix[i][j].Value;
+                    }
+                    else if (daysMatrix[i][j].Value.HasTimeBoundEvents)
+                    {
+                        Console.BackgroundColor = ConsoleColor.Magenta;
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.PersonalEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                        Console.ForegroundColor = ConsoleColor.White;
                     }
                     else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.HolyEvent)
                     {
@@ -149,11 +137,6 @@ namespace CalendarScheduler
                         Console.BackgroundColor = ConsoleColor.DarkGreen;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.PersonalEvent)
-                    {
-                        Console.BackgroundColor = ConsoleColor.Magenta;
-                        Console.ForegroundColor = ConsoleColor.White;
-                    }
                     else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.TragicEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
@@ -166,11 +149,27 @@ namespace CalendarScheduler
                 Console.WriteLine();
             }
 
+            if (dayToWrite.HasTimeBoundEvents)
+            {
+                Console.BackgroundColor = ConsoleColor.Magenta;
+                Console.ForegroundColor = ConsoleColor.White;
+                foreach (var tbEvent in dayToWrite.TimeBoundEvents)
+                {
+                    Console.WriteLine($"{tbEvent.Description} ({tbEvent.Start})");
+                }
+                Console.ResetColor();
+            }
             if (dayToWrite.Type[0] != TypeOfDate.Usual)
             {
                 for (int i = 0; i < dayToWrite.NumberOfEvents; i++)
                 {
-                    if (dayToWrite.Type[i] == TypeOfDate.HolyEvent)
+                    if (dayToWrite.Type[i] == TypeOfDate.PersonalEvent)
+                    {
+                        Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine("Personal Event:");
+                    }
+                    else if (dayToWrite.Type[i] == TypeOfDate.HolyEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.ForegroundColor = ConsoleColor.Black;
@@ -188,12 +187,6 @@ namespace CalendarScheduler
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.WriteLine("International Event:");
                     }
-                    else if (dayToWrite.Type[i] == TypeOfDate.PersonalEvent)
-                    {
-                        Console.BackgroundColor = ConsoleColor.Magenta;
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine("Personal Event:");
-                    }
                     else if (dayToWrite.Type[i] == TypeOfDate.TragicEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
@@ -205,156 +198,165 @@ namespace CalendarScheduler
                 Console.ResetColor();
             }
         }
+
+
         public void MonthInterface(int year, int month, int day)
         {
-            var currentMonthArray = CalenderModel.GetMonthArray(year, month);
-            var monthMatrix = GetMatrixForMonth(currentMonthArray);
-            int daysInMonth = DateTime.DaysInMonth(year, month);
-
-            ConsoleKeyInfo keyInfo;
-            do
+            lock (_consoleLock)
             {
-                Console.Clear();
-                PrintMonth(monthMatrix, day);
-                keyInfo = Console.ReadKey();
+                _day = day;
+                _month = month;
+                _year = year;
+                var currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
+                var monthMatrix = GetMatrixForMonth(currentMonthArray);
+                int daysInMonth = DateTime.DaysInMonth(_year, _month);
 
-                if (keyInfo.Key == ConsoleKey.D || keyInfo.Key == ConsoleKey.RightArrow)
+                ConsoleKeyInfo keyInfo;
+                do
                 {
-                    if (day + 1 <= daysInMonth)
-                    {
-                        day++;
-                    }
-                    else
-                    {
+                    Console.Clear();
+                    PrintMonth(monthMatrix, _day);
+                    keyInfo = Console.ReadKey();
 
-                        if (month + 1 <= 12)
+                    if (keyInfo.Key == ConsoleKey.D || keyInfo.Key == ConsoleKey.RightArrow)
+                    {
+                        if (_day + 1 <= daysInMonth)
                         {
-                            daysInMonth = DateTime.DaysInMonth(year, ++month);
-                            day = 1;
-                            currentMonthArray = CalenderModel.GetMonthArray(year, month);
-                            monthMatrix = GetMatrixForMonth(currentMonthArray);
+                            _day++;
                         }
                         else
                         {
-                            if (year + 1 <= 2028)
+
+                            if (_month + 1 <= 12)
                             {
-                                month = 1;
-                                daysInMonth = DateTime.DaysInMonth(++year, month);
-                                day = 1;
-                                currentMonthArray = CalenderModel.GetMonthArray(year, month);
+                                daysInMonth = DateTime.DaysInMonth(_year, ++_month);
+                                _day = 1;
+                                currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
                                 monthMatrix = GetMatrixForMonth(currentMonthArray);
+                            }
+                            else
+                            {
+                                if (_year + 1 <= 2028)
+                                {
+                                    _month = 1;
+                                    daysInMonth = DateTime.DaysInMonth(++_year, _month);
+                                    _day = 1;
+                                    currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
+                                    monthMatrix = GetMatrixForMonth(currentMonthArray);
+                                }
                             }
                         }
                     }
-                }
-                else if (keyInfo.Key == ConsoleKey.A || keyInfo.Key == ConsoleKey.LeftArrow)
-                {
-                    if (day - 1 >= 1)
+                    else if (keyInfo.Key == ConsoleKey.A || keyInfo.Key == ConsoleKey.LeftArrow)
                     {
-                        day--;
-                    }
-                    else
-                    {
-                        if (month - 1 >= 1)
+                        if (_day - 1 >= 1)
                         {
-                            daysInMonth = DateTime.DaysInMonth(year, --month);
-                            day = daysInMonth;
-                            currentMonthArray = CalenderModel.GetMonthArray(year, month);
-                            monthMatrix = GetMatrixForMonth(currentMonthArray);
+                            _day--;
                         }
                         else
                         {
-                            if (year - 1 >= 2024)
+                            if (_month - 1 >= 1)
                             {
-                                month = 12;
-                                daysInMonth = DateTime.DaysInMonth(--year, month);
-                                currentMonthArray = CalenderModel.GetMonthArray(year, month);
+                                daysInMonth = DateTime.DaysInMonth(_year, --_month);
+                                _day = daysInMonth;
+                                currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
                                 monthMatrix = GetMatrixForMonth(currentMonthArray);
-                                day = daysInMonth;
+                            }
+                            else
+                            {
+                                if (_year - 1 >= 2024)
+                                {
+                                    _month = 12;
+                                    daysInMonth = DateTime.DaysInMonth(--_year, _month);
+                                    currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
+                                    monthMatrix = GetMatrixForMonth(currentMonthArray);
+                                    _day = daysInMonth;
+                                }
                             }
                         }
                     }
-                }
-                else if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
-                {
-                    if (day + 7 <= daysInMonth)
+                    else if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
                     {
-                        day += 7;
-                    }
-                    else
-                    {
-                        if (month + 1 <= 12)
+                        if (_day + 7 <= daysInMonth)
                         {
-                            day = 7 - (daysInMonth - day);
-                            daysInMonth = DateTime.DaysInMonth(year, ++month);
-                            currentMonthArray = CalenderModel.GetMonthArray(year, month);
-                            monthMatrix = GetMatrixForMonth(currentMonthArray);
+                            _day += 7;
                         }
                         else
                         {
-                            if (year + 1 <= 2028)
+                            if (_month + 1 <= 12)
                             {
-                                day = 7 - (daysInMonth - day);
-                                month = 1;
-                                daysInMonth = DateTime.DaysInMonth(++year, month);
-                                currentMonthArray = CalenderModel.GetMonthArray(year, month);
+                                _day = 7 - (daysInMonth - _day);
+                                daysInMonth = DateTime.DaysInMonth(_year, ++_month);
+                                currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
                                 monthMatrix = GetMatrixForMonth(currentMonthArray);
+                            }
+                            else
+                            {
+                                if (_year + 1 <= 2028)
+                                {
+                                    _day = 7 - (daysInMonth - _day);
+                                    _month = 1;
+                                    daysInMonth = DateTime.DaysInMonth(++_year, _month);
+                                    currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
+                                    monthMatrix = GetMatrixForMonth(currentMonthArray);
+                                }
                             }
                         }
                     }
-                }
-                else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
-                {
-                    if (day - 7 >= 1)
+                    else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
                     {
-                        day -= 7;
-                    }
-                    else
-                    {
-                        if (month - 1 >= 1)
+                        if (_day - 7 >= 1)
                         {
-                            daysInMonth = DateTime.DaysInMonth(year, --month);
-                            currentMonthArray = CalenderModel.GetMonthArray(year, month);
-                            monthMatrix = GetMatrixForMonth(currentMonthArray);
-                            day = daysInMonth - (7 - day);
+                            _day -= 7;
                         }
                         else
                         {
-                            if (year - 1 >= 2024)
+                            if (_month - 1 >= 1)
                             {
-                                month = 12;
-                                daysInMonth = DateTime.DaysInMonth(--year, month);
-                                currentMonthArray = CalenderModel.GetMonthArray(year, month);
+                                daysInMonth = DateTime.DaysInMonth(_year, --_month);
+                                currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
                                 monthMatrix = GetMatrixForMonth(currentMonthArray);
-                                day = daysInMonth - (7 - day);
+                                _day = daysInMonth - (7 - _day);
+                            }
+                            else
+                            {
+                                if (_year - 1 >= 2024)
+                                {
+                                    _month = 12;
+                                    daysInMonth = DateTime.DaysInMonth(--_year, _month);
+                                    currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
+                                    monthMatrix = GetMatrixForMonth(currentMonthArray);
+                                    _day = daysInMonth - (7 - _day);
+                                }
                             }
                         }
                     }
-                }
-                else if (keyInfo.Key == ConsoleKey.Enter)
-                {
-                    DateOnly currentDate = ShowMenuToDo(currentMonthArray[day - 1]);
-                    day = currentDate.Day;
-                    month = currentDate.Month;
-                    year = currentDate.Year;
-                    currentMonthArray = CalenderModel.GetMonthArray(year, month);
-                    monthMatrix = GetMatrixForMonth(currentMonthArray);
-                }
-            } while (keyInfo.Key != ConsoleKey.Escape);
+                    else if (keyInfo.Key == ConsoleKey.Enter)
+                    {
+                        DateOnly currentDate = ShowMenuToDo(currentMonthArray[_day - 1]);
+                        _day = currentDate.Day;
+                        _month = currentDate.Month;
+                        _year = currentDate.Year;
+                        currentMonthArray = CalendarModel.GetMonthArray(_year, _month);
+                        monthMatrix = GetMatrixForMonth(currentMonthArray);
+                    }
+                } while (keyInfo.Key != ConsoleKey.Escape && !_isReminderRun);
+            }
         }
         public void MonthInterface(int year, int month) => MonthInterface(year, month, 1);
 
-        private void PrintMenu(string[] menuString, int choosenString)
+
+        private void PrintMenu(string[] menuString, int chosenString)
         {
             for (int i = 0; i < menuString.Length; i++)
             {
-                if (i == choosenString)
+                if (i == chosenString)
                 {
                     Console.ForegroundColor = ConsoleColor.Black;
                     Console.BackgroundColor = ConsoleColor.Gray;
                 }
                 Console.WriteLine(menuString[i]);
-                if (i == choosenString)
+                if (i == chosenString)
                 {
                     Console.ResetColor();
                 }
@@ -372,31 +374,30 @@ namespace CalendarScheduler
                 "Exit"
             };
 
-            var monthMatrix = GetMatrixForMonth(CalenderModel.GetMonthArray(date.Key.Year, date.Key.Month));
+            var monthMatrix = GetMatrixForMonth(CalendarModel.GetMonthArray(date.Key.Year, date.Key.Month));
 
-            bool exit = false;
-            int currentOprtion = 0;
+            int currentOption = 0;
             ConsoleKeyInfo keyInfo;
             int choice = 0;
-            while (!exit)
+            while (true)
             {
                 Console.Clear();
                 PrintMonth(monthMatrix, date.Key.Day);
-                PrintMenu(menuStrings, currentOprtion);
+                PrintMenu(menuStrings, currentOption);
 
 
                 keyInfo = Console.ReadKey();
                 if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
                 {
-                    currentOprtion = currentOprtion + 1 <= menuStrings.Length - 1 ? currentOprtion + 1 : 0;
+                    currentOption = currentOption + 1 <= menuStrings.Length - 1 ? currentOption + 1 : 0;
                 }
                 else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
                 {
-                    currentOprtion = currentOprtion - 1 >= 0 ? currentOprtion - 1 : menuStrings.Length - 1;
+                    currentOption = currentOption - 1 >= 0 ? currentOption - 1 : menuStrings.Length - 1;
                 }
                 else if (keyInfo.Key == ConsoleKey.Enter)
                 {
-                    choice = currentOprtion;
+                    choice = currentOption;
                     break;
                 }
             }
@@ -405,13 +406,13 @@ namespace CalendarScheduler
                 case 0:
                     Console.WriteLine("Enter date you want to move (Format: dd.mm.yyyy)");
                     string dateToMove = Console.ReadLine();
-                    var splitedDateToMove = dateToMove.Split('.');
-                    if (splitedDateToMove.Length == 3)
+                    var splitDateToMove = dateToMove.Split('.');
+                    if (splitDateToMove.Length == 3)
                     {
                         int year, month, day;
-                        if (int.TryParse(splitedDateToMove[2], out year) &&
-                            int.TryParse(splitedDateToMove[1], out month) &&
-                            int.TryParse(splitedDateToMove[0], out day) &&
+                        if (int.TryParse(splitDateToMove[2], out year) &&
+                            int.TryParse(splitDateToMove[1], out month) &&
+                            int.TryParse(splitDateToMove[0], out day) &&
                             year >= 2024 && year <= 2028 &&
                             month >= 1 && month <= 12)
                         {
@@ -437,6 +438,40 @@ namespace CalendarScheduler
             }
         }
 
+        public void Remind(string message)
+        {
+            _isReminderRun = true;
+            lock (_consoleLock)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    Console.Clear();
+                    string notification =
+                        "---------------------------\n" +
+                        "|                         |\n" +
+                        "|                         |\n" +
+                        $"{message}\n" +
+                        "|                         |\n" +
+                        "|                         |\n" +
+                        "---------------------------";
+                    Console.WriteLine(notification);
+                    Thread.Sleep(200);
+                    Console.Clear();
+                    Console.BackgroundColor = ConsoleColor.DarkYellow;
+                    Console.WriteLine(notification);
+                    Console.ResetColor();
+                    Thread.Sleep(200);
+
+                }
+
+                Console.ReadKey();
+                _isReminderRun = false;
+                Task monthInterface = new Task(() => MonthInterface(_year, _month, _day));
+                monthInterface.Start();
+
+            }
+        }
+
         private void EditMenu(KeyValuePair<DateOnly, Day> date)
         {
             string[] menuStrings =
@@ -447,18 +482,35 @@ namespace CalendarScheduler
                 "Exit"
             };
             bool exit = false;
-            int currentOprtion = 0;
+            int currentOption = 0;
             ConsoleKeyInfo keyInfo;
             int choice = 0;
             while (!exit)
             {
                 Console.Clear();
                 Console.WriteLine(date.Key);
+
+                byte numberEvent = 0;
+                if (date.Value.HasTimeBoundEvents)
+                {
+                    Console.BackgroundColor = ConsoleColor.Magenta;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    foreach (var tbEvent in date.Value.TimeBoundEvents)
+                    {
+                        Console.WriteLine($"{++numberEvent}) {tbEvent.Description} ({tbEvent.Start})");
+                    }
+                    Console.ResetColor();
+                }
                 if (date.Value.Type[0] != TypeOfDate.Usual)
                 {
                     for (int i = 0; i < date.Value.NumberOfEvents; i++)
                     {
-                        if (date.Value.Type[i] == TypeOfDate.HolyEvent)
+                        if (date.Value.Type[i] == TypeOfDate.PersonalEvent)
+                        {
+                            Console.BackgroundColor = ConsoleColor.DarkMagenta;
+                            Console.ForegroundColor = ConsoleColor.White;
+                        }
+                        else if (date.Value.Type[i] == TypeOfDate.HolyEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.Yellow;
                             Console.ForegroundColor = ConsoleColor.Black;
@@ -473,43 +525,39 @@ namespace CalendarScheduler
                             Console.BackgroundColor = ConsoleColor.DarkGreen;
                             Console.ForegroundColor = ConsoleColor.White;
                         }
-                        else if (date.Value.Type[i] == TypeOfDate.PersonalEvent)
-                        {
-                            Console.BackgroundColor = ConsoleColor.Magenta;
-                            Console.ForegroundColor = ConsoleColor.White;
-                        }
                         else if (date.Value.Type[i] == TypeOfDate.TragicEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.ForegroundColor = ConsoleColor.Black;
                         }
-                        Console.WriteLine(date.Value.NameOfEvent[i]);
+                        Console.WriteLine($"{++numberEvent}) {date.Value.NameOfEvent[i]}");
                     }
                     Console.ResetColor();
                 }
+                Console.WriteLine();
 
-                PrintMenu(menuStrings, currentOprtion);
+                PrintMenu(menuStrings, currentOption);
 
 
                 keyInfo = Console.ReadKey();
                 if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
                 {
-                    currentOprtion = currentOprtion + 1 <= menuStrings.Length - 1 ? currentOprtion + 1 : 0;
+                    currentOption = currentOption + 1 <= menuStrings.Length - 1 ? currentOption + 1 : 0;
                 }
                 else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
                 {
-                    currentOprtion = currentOprtion - 1 >= 0 ? currentOprtion - 1 : menuStrings.Length - 1;
+                    currentOption = currentOption - 1 >= 0 ? currentOption - 1 : menuStrings.Length - 1;
                 }
                 else if (keyInfo.Key == ConsoleKey.Enter)
                 {
-                    choice = currentOprtion;
+                    choice = currentOption;
                     break;
                 }
             }
             switch (choice)
             {
                 case 0:
-                    Console.WriteLine("Enter name of your event:");
+                    Console.WriteLine("Enter name or description for your event:");
                     string? nameOfEvent = Console.ReadLine();
                     OnEventAdded(date.Key.Year, date.Key.Month, date.Key.Day, nameOfEvent);
                     break;
@@ -531,27 +579,26 @@ namespace CalendarScheduler
                 "2. Reset calendar;",
                 "Exit"
             };
-            bool exit = false;
-            int currentOprtion = 0;
+            int currentOption = 0;
             ConsoleKeyInfo keyInfo;
             int choice = 0;
-            while (!exit)
+            while (true)
             {
                 Console.Clear();
-                PrintMenu(menuStrings, currentOprtion);
+                PrintMenu(menuStrings, currentOption);
 
                 keyInfo = Console.ReadKey();
                 if (keyInfo.Key == ConsoleKey.S || keyInfo.Key == ConsoleKey.DownArrow)
                 {
-                    currentOprtion = currentOprtion + 1 <= menuStrings.Length - 1 ? currentOprtion + 1 : 0;
+                    currentOption = currentOption + 1 <= menuStrings.Length - 1 ? currentOption + 1 : 0;
                 }
                 else if (keyInfo.Key == ConsoleKey.W || keyInfo.Key == ConsoleKey.UpArrow)
                 {
-                    currentOprtion = currentOprtion - 1 >= 0 ? currentOprtion - 1 : menuStrings.Length - 1;
+                    currentOption = currentOption - 1 >= 0 ? currentOption - 1 : menuStrings.Length - 1;
                 }
                 else if (keyInfo.Key == ConsoleKey.Enter)
                 {
-                    choice = currentOprtion;
+                    choice = currentOption;
                     break;
                 }
             }
@@ -561,7 +608,7 @@ namespace CalendarScheduler
                     OnDefaultEventsReturned();
                     break;
                 case 1:
-                    OnCalendarReseted();
+                    OnCalendarReset();
                     break;
                 default:
                     break;
