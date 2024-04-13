@@ -9,28 +9,6 @@ using System.Threading.Tasks;
 
 namespace CalendarScheduler
 {
-    enum TypeOfDate
-    {
-        Usual,
-        InternationalEvent,
-        NationalEvent,
-        HolyEvent,
-        PersonalEvent,
-        TragicEvent
-    }
-    class TimeBoundEvent
-    {
-        public TimeOnly Start { get; set; }
-        public TimeOnly End { get; set; }
-        public string Description { get; set; }
-        public TimeBoundEvent(TimeOnly start, string description)
-        {
-            Start = start;
-            Description = description;
-            TimeOnly end = new TimeOnly(23, 59, 59, 999);
-            End = end;
-        }
-    } 
     internal class Day
     {
         public List<TypeOfDate> Type { get; set; }
