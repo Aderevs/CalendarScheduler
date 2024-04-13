@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CalendarScheduler
 {
-    public enum TypeOfDate
+    enum TypeOfDate
     {
         Usual,
         InternationalEvent,
@@ -17,6 +18,19 @@ namespace CalendarScheduler
         PersonalEvent,
         TragicEvent
     }
+    class TimeBoundEvent
+    {
+        public TimeOnly Start { get; set; }
+        public TimeOnly End { get; set; }
+        public string Description { get; set; }
+        public TimeBoundEvent(TimeOnly start, string description)
+        {
+            Start = start;
+            Description = description;
+            TimeOnly end = new TimeOnly(23, 59, 59, 999);
+            End = end;
+        }
+    } 
     internal class Day
     {
         public List<TypeOfDate> Type { get; set; }
@@ -29,7 +43,13 @@ namespace CalendarScheduler
                 return Type.Count;
             }
         }
-
+        public bool HasTimeBoundEvents
+        {
+            get
+            {
+                return TimeBoundEvents.Any();
+            }
+        }
         public Day()
         {
             Type = new List<TypeOfDate>();
