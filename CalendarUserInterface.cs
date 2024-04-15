@@ -101,7 +101,7 @@ namespace CalendarScheduler
             {
                 for (int j = 0; j < daysMatrix[i].Length; j++)
                 {
-                    int lastIndex = daysMatrix[i][j].Value.Type.Count - 1;
+                    int lastIndex = daysMatrix[i][j].Value.Types.Count - 1;
                     if (daysMatrix[i][j].Key.DayOfWeek == DayOfWeek.Saturday || daysMatrix[i][j].Key.DayOfWeek == DayOfWeek.Sunday)
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
@@ -117,27 +117,27 @@ namespace CalendarScheduler
                         Console.BackgroundColor = ConsoleColor.Magenta;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.PersonalEvent)
+                    else if (daysMatrix[i][j].Value.Types[lastIndex] == TypeOfDate.PersonalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkMagenta;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.HolyEvent)
+                    else if (daysMatrix[i][j].Value.Types[lastIndex] == TypeOfDate.HolyEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.ForegroundColor = ConsoleColor.Black;
                     }
-                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.NationalEvent)
+                    else if (daysMatrix[i][j].Value.Types[lastIndex] == TypeOfDate.NationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Blue;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.InternationalEvent)
+                    else if (daysMatrix[i][j].Value.Types[lastIndex] == TypeOfDate.InternationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkGreen;
                         Console.ForegroundColor = ConsoleColor.White;
                     }
-                    else if (daysMatrix[i][j].Value.Type[lastIndex] == TypeOfDate.TragicEvent)
+                    else if (daysMatrix[i][j].Value.Types[lastIndex] == TypeOfDate.TragicEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
                         Console.ForegroundColor = ConsoleColor.Black;
@@ -159,46 +159,45 @@ namespace CalendarScheduler
                 }
                 Console.ResetColor();
             }
-            if (dayToWrite.Type[0] != TypeOfDate.Usual)
+            if (dayToWrite.Types[0] != TypeOfDate.Usual)
             {
                 for (int i = 0; i < dayToWrite.NumberOfEvents; i++)
                 {
-                    if (dayToWrite.Type[i] == TypeOfDate.PersonalEvent)
+                    if (dayToWrite.Types[i] == TypeOfDate.PersonalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkMagenta;
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.WriteLine("Personal Event:");
                     }
-                    else if (dayToWrite.Type[i] == TypeOfDate.HolyEvent)
+                    else if (dayToWrite.Types[i] == TypeOfDate.HolyEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.ForegroundColor = ConsoleColor.Black;
                         Console.WriteLine("Holy Event:");
                     }
-                    else if (dayToWrite.Type[i] == TypeOfDate.NationalEvent)
+                    else if (dayToWrite.Types[i] == TypeOfDate.NationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.Blue;
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.WriteLine("National Event:");
                     }
-                    else if (dayToWrite.Type[i] == TypeOfDate.InternationalEvent)
+                    else if (dayToWrite.Types[i] == TypeOfDate.InternationalEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkGreen;
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.WriteLine("International Event:");
                     }
-                    else if (dayToWrite.Type[i] == TypeOfDate.TragicEvent)
+                    else if (dayToWrite.Types[i] == TypeOfDate.TragicEvent)
                     {
                         Console.BackgroundColor = ConsoleColor.DarkRed;
                         Console.ForegroundColor = ConsoleColor.Black;
                         Console.WriteLine("Tragic Event:");
                     }
-                    Console.WriteLine(dayToWrite.NameOfEvent[i]);
+                    Console.WriteLine(dayToWrite.NameOfEvents[i]);
                 }
                 Console.ResetColor();
             }
         }
-
 
         public void MonthInterface(int year, int month, int day)
         {
@@ -345,7 +344,6 @@ namespace CalendarScheduler
         }
         public void MonthInterface(int year, int month) => MonthInterface(year, month, 1);
 
-
         private void PrintMenu(string[] menuString, int chosenString)
         {
             for (int i = 0; i < menuString.Length; i++)
@@ -450,7 +448,7 @@ namespace CalendarScheduler
                         "---------------------------\n" +
                         "|                         |\n" +
                         "|                         |\n" +
-                        $"{message}\n" +
+                        $" {message} \n" +
                         "|                         |\n" +
                         "|                         |\n" +
                         "---------------------------";
@@ -501,36 +499,36 @@ namespace CalendarScheduler
                     }
                     Console.ResetColor();
                 }
-                if (date.Value.Type[0] != TypeOfDate.Usual)
+                if (date.Value.Types[0] != TypeOfDate.Usual)
                 {
                     for (int i = 0; i < date.Value.NumberOfEvents; i++)
                     {
-                        if (date.Value.Type[i] == TypeOfDate.PersonalEvent)
+                        if (date.Value.Types[i] == TypeOfDate.PersonalEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.DarkMagenta;
                             Console.ForegroundColor = ConsoleColor.White;
                         }
-                        else if (date.Value.Type[i] == TypeOfDate.HolyEvent)
+                        else if (date.Value.Types[i] == TypeOfDate.HolyEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.Yellow;
                             Console.ForegroundColor = ConsoleColor.Black;
                         }
-                        else if (date.Value.Type[i] == TypeOfDate.NationalEvent)
+                        else if (date.Value.Types[i] == TypeOfDate.NationalEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.Blue;
                             Console.ForegroundColor = ConsoleColor.White;
                         }
-                        else if (date.Value.Type[i] == TypeOfDate.InternationalEvent)
+                        else if (date.Value.Types[i] == TypeOfDate.InternationalEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.DarkGreen;
                             Console.ForegroundColor = ConsoleColor.White;
                         }
-                        else if (date.Value.Type[i] == TypeOfDate.TragicEvent)
+                        else if (date.Value.Types[i] == TypeOfDate.TragicEvent)
                         {
                             Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.ForegroundColor = ConsoleColor.Black;
                         }
-                        Console.WriteLine($"{++numberEvent}) {date.Value.NameOfEvent[i]}");
+                        Console.WriteLine($"{++numberEvent}) {date.Value.NameOfEvents[i]}");
                     }
                     Console.ResetColor();
                 }

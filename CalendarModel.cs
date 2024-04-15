@@ -16,7 +16,7 @@ namespace CalendarScheduler
             FileInfo allDefaultEventsFile = new FileInfo(_allDefaultEventsJsonFilePath);
             //FileInfo allTimeBoundEventsFile = new FileInfo(_allTimeBoundEventsJsonFilePath);
 
-            if (allDaysFile.Exists && allDefaultEventsFile.Exists )
+            if (allDaysFile.Exists && allDefaultEventsFile.Exists)
             {
                 _allDays = DeserializeDatesFromJson(_allDaysJsonFilePath);
                 _allDefaultEvents = DeserializeDatesFromJson(_allDefaultEventsJsonFilePath);
@@ -153,8 +153,8 @@ namespace CalendarScheduler
                 {
                     if (_allDefaultEvents.ContainsKey(currentDay))
                     {
-                        _allDefaultEvents[currentDay].Type.Add(currentDayType);
-                        _allDefaultEvents[currentDay].NameOfEvent.Add(currentEvent);
+                        _allDefaultEvents[currentDay].Types.Add(currentDayType);
+                        _allDefaultEvents[currentDay].NameOfEvents.Add(currentEvent);
                     }
                     _allDefaultEvents.Add(currentDay, dayToAdd);
                 }
@@ -168,22 +168,22 @@ namespace CalendarScheduler
         {
             foreach (KeyValuePair<DateOnly, Day> date in _allDays)
             {
-                Console.WriteLine(date.Key.ToString("yyyy.mm.dd") + " " + date.Value.NameOfEvent);
+                Console.WriteLine(date.Key.ToString("yyyy.mm.dd") + " " + date.Value.NameOfEvents);
             }
         }
 
         #region interaction with days for user
         public void AddNewEvent(DateOnly date, string newEvent)
         {
-            if (_allDays[date].Type[0] == TypeOfDate.Usual)
+            if (_allDays[date].Types[0] == TypeOfDate.Usual)
             {
                 var timeBoundEvents = _allDays[date].TimeBoundEvents;
                 _allDays[date] = new Day(TypeOfDate.PersonalEvent, newEvent, timeBoundEvents);
             }
             else
             {
-                _allDays[date].Type.Add(TypeOfDate.PersonalEvent);
-                _allDays[date].NameOfEvent.Add(newEvent);
+                _allDays[date].Types.Add(TypeOfDate.PersonalEvent);
+                _allDays[date].NameOfEvents.Add(newEvent);
             }
             SerializeDatesToJson(_allDays, _allDaysJsonFilePath);
         }
@@ -192,7 +192,7 @@ namespace CalendarScheduler
             for (int i = 2024; i <= 2028; i++)
             {
                 DateOnly date = new DateOnly(i, month, day);
-                if (_allDays[date].Type[0] == TypeOfDate.Usual)
+                if (_allDays[date].Types[0] == TypeOfDate.Usual)
                 {
                     var timeBoundEvents = _allDays[date].TimeBoundEvents;
                     _allDays[date] = new Day(TypeOfDate.PersonalEvent, newEvent, timeBoundEvents);
@@ -200,8 +200,8 @@ namespace CalendarScheduler
                 else
                 {
 
-                    _allDays[date].Type.Add(TypeOfDate.PersonalEvent);
-                    _allDays[date].NameOfEvent.Add(newEvent);
+                    _allDays[date].Types.Add(TypeOfDate.PersonalEvent);
+                    _allDays[date].NameOfEvents.Add(newEvent);
                 }
             }
             SerializeDatesToJson(_allDays, _allDaysJsonFilePath);
@@ -211,11 +211,11 @@ namespace CalendarScheduler
         {
             if (numberOfEvent <= _allDays[date].NumberOfEvents)
             {
-                _allDays[date].Type.RemoveAt(numberOfEvent - 1);
-                _allDays[date].NameOfEvent.RemoveAt(numberOfEvent - 1);
+                _allDays[date].Types.RemoveAt(numberOfEvent - 1);
+                _allDays[date].NameOfEvents.RemoveAt(numberOfEvent - 1);
                 if (_allDays[date].NumberOfEvents < 1)
                 {
-                    _allDays[date].Type.Add(TypeOfDate.Usual);
+                    _allDays[date].Types.Add(TypeOfDate.Usual);
                 }
             }
             else
@@ -232,18 +232,18 @@ namespace CalendarScheduler
                 if (_allDefaultEvents.ContainsKey(day.Key))
                 {
                     var thisDayEvents = new List<string>();
-                    if (_allDays[day.Key].NumberOfEvents > 1 || _allDays[day.Key].Type[0] == TypeOfDate.PersonalEvent)
+                    if (_allDays[day.Key].NumberOfEvents > 1 || _allDays[day.Key].Types[0] == TypeOfDate.PersonalEvent)
                     {
                         for (int i = 0; i < day.Value.NumberOfEvents; i++)
                         {
                             Console.WriteLine();
-                            if (day.Value.Type[i] == TypeOfDate.PersonalEvent)
+                            if (day.Value.Types[i] == TypeOfDate.PersonalEvent)
                             {
-                                thisDayEvents.Add(day.Value.NameOfEvent[i]);
+                                thisDayEvents.Add(day.Value.NameOfEvents[i]);
                             }
                         }
                     }
-                    _allDays[day.Key] = new Day(_allDefaultEvents[day.Key].Type, _allDefaultEvents[day.Key].NameOfEvent);
+                    _allDays[day.Key] = new Day(_allDefaultEvents[day.Key].Types, _allDefaultEvents[day.Key].NameOfEvents);
                     foreach (var eventInfo in thisDayEvents)
                     {
                         AddNewEvent(day.Key, eventInfo);
@@ -257,7 +257,7 @@ namespace CalendarScheduler
         {
             if (_allDays[date].NumberOfEvents >= numberOfEvent)
             {
-                _allDays[date].NameOfEvent[numberOfEvent - 1] = newDescription;
+                _allDays[date].NameOfEvents[numberOfEvent - 1] = newDescription;
             }
             else
             {
@@ -350,18 +350,26 @@ namespace CalendarScheduler
         {
             var today = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
             var todaysDay = _allDays.First(d => d.Key == today);
+            DateTime lastRemind = new();
             if (todaysDay.Value.HasTimeBoundEvents)
             {
                 while (true)
                 {
                     var scheduledEvent = todaysDay.Value.TimeBoundEvents.FirstOrDefault(tbe => tbe.Start == new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute));
-                    if (scheduledEvent!=null)
+                    DateTime currentDateTime = DateTime.Now;
+                    bool isRemindAlreadyHappened = currentDateTime.Year == lastRemind.Year &&
+                                   currentDateTime.Month == lastRemind.Month &&
+                                   currentDateTime.Day == lastRemind.Day &&
+                                   currentDateTime.Hour == lastRemind.Hour &&
+                                   currentDateTime.Minute == lastRemind.Minute;
+                    if (scheduledEvent != null && !isRemindAlreadyHappened)
                     {
+                        lastRemind = DateTime.Now;
                         OnEventHappened(scheduledEvent.Description);
                     }
                 }
             }
         }
-       
+
     }
 }

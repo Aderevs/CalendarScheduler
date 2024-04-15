@@ -92,7 +92,7 @@ namespace CalendarScheduler
         {
             byte numberOfEvent = 1;
             if (date.Value.NumberOfEvents > 1 ||
-                date.Value.Type[0] != TypeOfDate.Usual && date.Value.HasTimeBoundEvents ||
+                date.Value.Types[0] != TypeOfDate.Usual && date.Value.HasTimeBoundEvents ||
                 date.Value.TimeBoundEvents.Count > 1)
             {
                 Console.WriteLine("Enter number of event you want to remove:");
@@ -128,7 +128,7 @@ namespace CalendarScheduler
         public void EditEvent(KeyValuePair<DateOnly, Day> date)
         {
             if (date.Value.NumberOfEvents > 1 ||
-                date.Value.Type[0] != TypeOfDate.Usual && date.Value.HasTimeBoundEvents)
+                date.Value.Types[0] != TypeOfDate.Usual && date.Value.HasTimeBoundEvents)
             {
                 byte numberOfEvent;
                 Console.WriteLine("Enter number of event you want to edit:");
@@ -169,7 +169,7 @@ namespace CalendarScheduler
                     if (newDesc != "")
                     {
 
-                        if (date.Value.Type[0] == TypeOfDate.Usual)
+                        if (date.Value.Types[0] == TypeOfDate.Usual)
                         {
                             _model.AddNewEvent(date.Key, newDesc);
                         }

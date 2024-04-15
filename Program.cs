@@ -1,4 +1,3 @@
 ﻿using CalendarScheduler;
 
 new CalendarPresenter();
-

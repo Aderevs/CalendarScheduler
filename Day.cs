@@ -11,14 +11,14 @@ namespace CalendarScheduler
 {
     internal class Day
     {
-        public List<TypeOfDate> Type { get; set; }
-        public List<string?> NameOfEvent { get; set; }
+        public List<TypeOfDate> Types { get; set; }
+        public List<string?> NameOfEvents { get; set; }
         public SortedSet<TimeBoundEvent> TimeBoundEvents { get; set; }
         public int NumberOfEvents
         {
             get
             {
-                return Type.Count;
+                return Types.Count;
             }
         }
         public bool HasTimeBoundEvents
@@ -30,33 +30,33 @@ namespace CalendarScheduler
         }
         public Day()
         {
-            Type = new List<TypeOfDate>();
-            NameOfEvent = new();
+            Types = new List<TypeOfDate>();
+            NameOfEvents = new();
             TimeBoundEvents = [];
-            Type.Add(TypeOfDate.Usual);
-            NameOfEvent.Add(null);
+            Types.Add(TypeOfDate.Usual);
+            NameOfEvents.Add(null);
         }
         public Day(TypeOfDate type)
         {
-            Type = new List<TypeOfDate>();
-            NameOfEvent = new();
+            Types = new List<TypeOfDate>();
+            NameOfEvents = new();
             TimeBoundEvents = [];
-            Type.Add(type);
-            NameOfEvent.Add(null);
+            Types.Add(type);
+            NameOfEvents.Add(null);
         }
         public Day(TypeOfDate type, string nameOfEvent) : this(type)
         {
-            NameOfEvent = new();
-            NameOfEvent.Add(nameOfEvent);
+            NameOfEvents = new();
+            NameOfEvents.Add(nameOfEvent);
         }
         public Day(TypeOfDate type, string nameOfEvent, SortedSet<TimeBoundEvent> timeBoundEvents) : this(type, nameOfEvent)
         {
             TimeBoundEvents = timeBoundEvents;
         }
-        public Day(List<TypeOfDate> type, List<string?> nameOfEvent)
+        public Day(List<TypeOfDate> type, List<string?> nameOfEvents)
         {
-            Type = type;
-            NameOfEvent = nameOfEvent;
+            Types = type;
+            NameOfEvents = nameOfEvents;
             TimeBoundEvents = [];
         }
     }
